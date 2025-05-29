@@ -60,6 +60,7 @@
 - LLMモデルファイル: ELYZA-japanese-Llama-2-7b など
 
 ## 5. ファイル構成（推奨）
+```bash
 .
 ├── generate_styled_descriptions.py  # メイン処理スクリプト
 ├── few_shot.py                      # Few-shotの例とプロンプトテンプレート定義
@@ -71,6 +72,7 @@
 ├── model/                           # LLMモデルファイル
 │   └── (ELYZA-japanese-Llama-2-7b など)
 └── README.md
+```
 
 ## 6. 実行方法
 
@@ -80,14 +82,14 @@ python generate_styled_descriptions.py [オプション]
 
 主要なオプション
 
---mode TEXT: 実行モード (validation または production)
---num_samples INTEGER: 検証モードで処理するサンプル数（デフォルト: 3）
---max_tokens INTEGER: 生成時の最大トークン数（デフォルト: 500）
---max_summary_tokens INTEGER: 事前要約時の最大トークン数（デフォルト: 150）
---temperature FLOAT: 生成時のtemperature（デフォルト: 0.75）
---presummary_threshold INTEGER: 事前要約の対象となる文字数（デフォルト: 800）
---summarize_restructure_threshold INTEGER: 要約・再構成プロンプト使用の閾値（デフォルト: 200）
---generate_complement_threshold INTEGER: 補完・生成プロンプト使用の閾値（デフォルト: 30）
+- --mode TEXT: 実行モード (validation または production)
+- --num_samples INTEGER: 検証モードで処理するサンプル数（デフォルト: 3）
+- --max_tokens INTEGER: 生成時の最大トークン数（デフォルト: 500）
+- --max_summary_tokens INTEGER: 事前要約時の最大トークン数（デフォルト: 150）
+- --temperature FLOAT: 生成時のtemperature（デフォルト: 0.75）
+- --presummary_threshold INTEGER: 事前要約の対象となる文字数（デフォルト: 800）
+- --summarize_restructure_threshold INTEGER: 要約・再構成プロンプト使用の閾値（デフォルト: 200）
+- --generate_complement_threshold INTEGER: 補完・生成プロンプト使用の閾値（デフォルト: 30）
 
 実行例
 検証モードで5サンプル処理:
@@ -100,15 +102,3 @@ python generate_styled_descriptions.py --mode validation --num_samples 5 --max_t
 bash
 python generate_styled_descriptions.py --mode production
 ```
-
-7. few_shot.py のカスタマイズ（非常に重要）
-
-FEW_SHOT_EXAMPLES_DATA:
-
-「既存の説明文」と「理想的なスタイル情報を含む紹介文」のペアを10個程度設定
-4つの観点（キースタイル/コンセプト、代表アイテム、素材・色、ターゲット層）を明確に記述
-
-
-プロンプトテンプレート:
-
-データセット特性や目指す紹介文のトーン＆マナーに合わせて調整
