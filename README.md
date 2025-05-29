@@ -1,15 +1,114 @@
-ファッションブランドライン類似度分析のためのスタイル情報拡張プロジェクト1. プロジェクト概要本プロジェクトは、ファッションブランドの各ラインに関する説明文（description）に対し、大規模言語モデル（LLM）を用いてファッションスタイルに関する情報（キースタイル/コンセプト、代表的なアイテム、素材や色使いの特徴、ターゲット顧客層のイメージなど）を補完・生成することを目的としています。既存の説明文はブランドの歴史や沿革が中心であることが多く、またHTMLタグが混入していたり、情報が冗長であったりする場合があります。本プロジェクトでは、これらの説明文をクリーニングし、LLMを活用してスタイル情報を付加することで、よりファッション的な観点からブランドライン間の類似度を分析するための質の高いテキストデータを生成します。最終的には、生成された充実した説明文をベクトル化し、ブランドライン間の類似度計算、クラスタリング、可視化など、さらなる分析へ繋げることを目指します。これは、過去に実施された「共通施設数」に基づく物理的な近さの分析を補完し、より多角的で深い洞察を得るための取り組みです。2. 使用データblines.csv: 主要な入力データ。ブランドラインのID、名称 (name カラム)、既存の説明文 (description カラム) などが含まれます。brands.csv: ブランドID、ブランド名、ブランドカテゴリなどの情報が含まれます。（本スクリプトでは直接使用していませんが、blines.csv に事前にブランド情報がマージされていることを想定しています。もしマージされていない場合は、適宜スクリプトのデータ読み込み部分で対応が必要です。）データは /datasets/bline_similarity/ ディレクトリに配置することを想定しています。3. 主要な処理フローデータ読み込みと前処理:blines.csv を読み込みます。description カラムに含まれるHTMLタグを除去し、不要な改行や空白を整理して description_cleaned カラムを作成します。LLMによるスタイル情報特化型ディスクリプション生成:ローカルに配置された日本語LLM（例: ELYZA-japanese-Llama-2-7b）を使用します。few_shot.py ファイルに定義されたFew-shotの例とプロンプトテンプレートを活用します。既存説明文の長さに応じた条件分岐処理:長文の場合 (desc_len_chars > presummary_threshold):まず、LLMに長文の既存説明文からファッションスタイルに関連する情報を中心に400字程度で事前要約させます。その要約結果を「既存の説明文」として、スタイル情報の要約・再構成を促すプロンプト（PROMPT_TEMPLATE_SUMMARIZE_RESTRUCTURE）を適用します。中程度の文の場合 (desc_len_chars > generate_complement_threshold):スタイル情報の補完・生成を促すプロンプト（PROMPT_TEMPLATE_GENERATE_COMPLEMENT）を適用します。短文またはほぼ情報がない場合:ブランドライン名のみを主な手がかりとしてスタイル情報を完全新規生成させるプロンプト（PROMPT_TEMPLATE_GENERATE_NEW）を適用します。生成されたスタイル情報を含む新しい説明文は description_styled カラムに格納されます。結果の保存:処理後のデータフレーム（description_styled カラムを含む）を、タイムスタンプ付きの新しいCSVファイルとして /datasets/bline_similarity/ ディレクトリに保存します。（例: blines_with_AI_styled_descriptions_YYYYMMDDHHMM.csv）各ブランドラインの生成処理に関するログ（使用したプロンプトタイプ、生成結果など）も別途CSVファイルとして保存されます。4. 必要なライブラリ・環境Python 3.xpandastransformers (pip install transformers)torch (pip install torch torchvision torchaudio - ご自身の環境に合わせてCUDA版も検討してください)tqdm (pip install tqdm)BeautifulSoup4 (pip install beautifulsoup4)accelerate (pip install accelerate - device_map="auto" を使用する場合に推奨)LLMモデルファイル: ELYZA-japanese-Llama-2-7b などの日本語LLMモデルファイル一式。スクリプト内の model_path で指定されたディレクトリ（例: /mnt/c/Users/rikuter/Carlin/model/）に配置してください。5. ファイル構成（推奨）.
-├── generate_styled_descriptions.py  # このメイン処理スクリプト
-├── few_shot.py                      # Few-shotの例とプロンプトテンプレートを定義
+# ファッションブランドライン類似度分析のためのスタイル情報拡張プロジェクト
+
+## 1. プロジェクト概要
+
+本プロジェクトは、ファッションブランドの各ラインに関する説明文（description）に対し、大規模言語モデル（LLM）を用いてファッションスタイルに関する情報を補完・生成することを目的としています。
+
+**目的:**
+- 既存の説明文（歴史や沿革中心）をクリーニング
+- LLMを活用してスタイル情報を付加
+- ファッション的観点からブランドライン間の類似度分析
+- 質の高いテキストデータの生成
+
+**最終ゴール:**
+- 生成された説明文をベクトル化
+- ブランドライン間の類似度計算、クラスタリング、可視化
+- 「共通施設数」に基づく物理的な近さの分析を補完
+- より多角的で深い洞察の獲得
+
+## 2. 使用データ
+
+- **blines.csv**: 主要入力データ（ブランドラインID、名称、既存の説明文）
+- **brands.csv**: ブランド情報（ID、名称、カテゴリ）
+- データは `/datasets/bline_similarity/` ディレクトリに配置
+
+## 3. 主要な処理フロー
+
+### データ読み込みと前処理
+- blines.csv を読み込み
+- HTMLタグ除去、不要な改行や空白の整理
+- `description_cleaned` カラムの作成
+
+### LLMによるスタイル情報特化型ディスクリプション生成
+- ローカルLLM（例: ELYZA-japanese-Llama-2-7b）を使用
+- Few-shotの例とプロンプトテンプレートを活用
+
+### 既存説明文の長さに応じた条件分岐処理
+1. **長文の場合** (`desc_len_chars > presummary_threshold`):
+   - LLMによる事前要約（400字程度）
+   - 要約結果を基にスタイル情報の要約・再構成
+   
+2. **中程度の文の場合** (`desc_len_chars > generate_complement_threshold`):
+   - スタイル情報の補完・生成
+
+3. **短文またはほぼ情報がない場合**:
+   - ブランドライン名を手がかりに完全新規生成
+
+### 結果の保存
+- 処理後のデータフレーム（`description_styled` カラム含む）をCSV保存
+- 処理ログも別途CSV保存
+
+## 4. 必要なライブラリ・環境
+
+- Python 3.x
+- pandas
+- transformers
+- torch
+- tqdm
+- BeautifulSoup4
+- accelerate
+- LLMモデルファイル: ELYZA-japanese-Llama-2-7b など
+
+## 5. ファイル構成（推奨）
+.
+├── generate_styled_descriptions.py  # メイン処理スクリプト
+├── few_shot.py                      # Few-shotの例とプロンプトテンプレート定義
 ├── datasets/
 │   └── bline_similarity/
 │       ├── blines.csv               # 入力するブランドラインデータ
 │       ├── brands.csv               # (任意) ブランド情報データ
-│       └── (ここに生成されたCSVファイルが出力されます)
-├── model/                           # LLMモデルファイル一式を格納
+│       └── (ここに生成されたCSVファイルが出力)
+├── model/                           # LLMモデルファイル
 │   └── (ELYZA-japanese-Llama-2-7b など)
-└── README.md                        # このファイル
-6. 実行方法以下のコマンドライン引数を使用してスクリプトを実行します。python generate_styled_descriptions.py [オプション]
-主要なオプション:--mode TEXT: 実行モードを選択 (validation または production)。validation: 少数のサンプルでテスト実行（デフォルト）。production: 全データで実行。--num_samples INTEGER: 検証モードで処理するサンプル数（デフォルト: 3）。--max_tokens INTEGER: LLMがスタイル説明文を生成する際の最大トークン数（デフォルト: 500）。--max_summary_tokens INTEGER: LLMが事前要約を生成する際の最大トークン数（デフォルト: 150）。--temperature FLOAT: LLM生成時のtemperature（デフォルト: 0.75）。値が低いほど決定的、高いほど多様な出力になります。--presummary_threshold INTEGER: この文字数以上の既存説明文（クリーニング後）は事前要約の対象となります（デフォルト: 800）。--summarize_restructure_threshold INTEGER: この文字数以上の入力説明文（事前要約後または元の短い文）は、要約・再構成プロンプトを使用します（デフォルト: 200）。--generate_complement_threshold INTEGER: この文字数以上の入力説明文は、補完・生成プロンプトを使用します。これ未満の場合は新規生成プロンプトが使用されます（デフォルト: 30）。実行例:検証モードで5サンプル処理、最大生成トークン数600:python generate_styled_descriptions.py --mode validation --num_samples 5 --max_tokens 600
-本番モードで全件処理:python generate_styled_descriptions.py --mode production
-7. few_shot.py のカスタマイズ（非常に重要）本プロジェクトの成果は、few_shot.py ファイル内に定義する FEW_SHOT_EXAMPLES_DATA の質に大きく依存します。FEW_SHOT_EXAMPLES_DATA: ここには、お手持ちの blines.csv から選定したブランドラインの「既存の説明文（example_existing_desc）」と、それに対応する「理想的なスタイル情報を含む紹介文 (example_generated_style_desc)」のペアを10個程度記述します。example_existing_desc は、実際のデータからスタイルに関連しそうな部分を抜粋・要約し、クリーニングしたものを設定してください。example_generated_style_desc は、LLMに期待するアウトプットの最高のお手本となるように、4つの観点（キースタイル/コンセプト、代表アイテム、素材・色、ターゲット層）を明確に、かつ魅力的に記述してください。この部分の作り込みが最も重要です。プロンプトテンプレート (PROMPT_TEMPLATE_...) も、必要に応じて指示文を調整してください。提供されているテンプレートは汎用的なものなので、ご自身のデータセットの特性や、目指す紹介文のトーン＆マナーに合わせて、これらの例とテンプレートを丁寧にカスタマイズすることが、より高品質な結果を得るための鍵となります。8. 今後の展望このスクリプトによって生成された、スタイル情報が充実したブランドライン説明文 (description_styled) を用いて、以下のような分析を進めることが可能です。テキストエンベディングモデル（例: ELYZA-japanese-Llama-2-7b のエンコーダ部分や、Sentence Transformersなど）を使用して、各説明文をベクトル化。ベクトル間のコサイン類似度などを計算し、ブランドライン間の類似度行列を作成。MDS（多次元尺度構成法）などを用いて、ブランドライン間の関係性を2次元または3次元空間に可視化。K-MeansやGMMなどのクラスタリング手法を用いて、類似したファッションスタイルのブランドラインをグループ化。特定のブランドラインに類似する他のブランドラインをランキング形式で表示。既存の「共通施設数」に基づく分析結果と、今回の「スタイル情報」に基づく類似度を組み合わせることで、より多角的で深いブランド間関係性の理解。このREADMEがプロジェクトの理解と運用の一助となれば幸いです。
+└── README.md
+
+## 6. 実行方法
+
+```bash
+python generate_styled_descriptions.py [オプション]
+```
+
+主要なオプション
+
+--mode TEXT: 実行モード (validation または production)
+--num_samples INTEGER: 検証モードで処理するサンプル数（デフォルト: 3）
+--max_tokens INTEGER: 生成時の最大トークン数（デフォルト: 500）
+--max_summary_tokens INTEGER: 事前要約時の最大トークン数（デフォルト: 150）
+--temperature FLOAT: 生成時のtemperature（デフォルト: 0.75）
+--presummary_threshold INTEGER: 事前要約の対象となる文字数（デフォルト: 800）
+--summarize_restructure_threshold INTEGER: 要約・再構成プロンプト使用の閾値（デフォルト: 200）
+--generate_complement_threshold INTEGER: 補完・生成プロンプト使用の閾値（デフォルト: 30）
+
+実行例
+検証モードで5サンプル処理:
+```bash
+python generate_styled_descriptions.py --mode validation --num_samples 5 --max_tokens 600
+```
+
+本番モードで全件処理:
+```
+bash
+python generate_styled_descriptions.py --mode production
+```
+
+7. few_shot.py のカスタマイズ（非常に重要）
+
+FEW_SHOT_EXAMPLES_DATA:
+
+「既存の説明文」と「理想的なスタイル情報を含む紹介文」のペアを10個程度設定
+4つの観点（キースタイル/コンセプト、代表アイテム、素材・色、ターゲット層）を明確に記述
+
+
+プロンプトテンプレート:
+
+データセット特性や目指す紹介文のトーン＆マナーに合わせて調整
