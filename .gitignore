@@ -99,6 +99,7 @@ DIMENSIONALITY_REDUCTION_GUIDE.md
 # All other files except essentials
 *
 !requirements.txt
+!runtime.txt
 !.streamlit/
 !.streamlit/config.toml
 !.streamlit/secrets.toml
