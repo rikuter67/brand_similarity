@@ -1,0 +1,108 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Large datasets and results (not needed for deployment)
+*.npy
+*.npz
+*.bin
+*.safetensors
+model/
+models/
+ruri_v3_downloaded_from_hub/
+ruri_embeddings_results/
+advanced_results/
+improved_results/
+integrated_results/
+llm_results/
+streamlit_results/
+normalization_analysis/
+datasets/
+
+# Generated files
+*_results_*.json
+*_results_*.csv
+*embeddings*.txt
+*embeddings*.npy
+*.csv
+!requirements.txt
+
+# Test and debug files
+test_*.py
+debug_*.py
+*_test.py
+*_debug.py
+
+# Backup files
+*_backup*.csv
+*_backup*.py
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints
+
+# Generated images/plots
+*.png
+*.jpg
+*.jpeg
+*.html
+!static/*.png
+!static/*.jpg
+
+# Logs and temporary files
+*.log
+*.tmp
+logs/
+
+# IDE and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Docker files (not needed for Streamlit Cloud)
+Dockerfile
+docker-compose.yml
+*.sh
+
+# Documentation files (keep only essential ones)
+README_*.md
+!STREAMLIT_DEPLOY.md
+usage_guide.md
+DIMENSIONALITY_REDUCTION_GUIDE.md
+
+# All other Python files except essentials
+*.py
+!streamlit_brand_app_improved.py
+!brand_similarity.py
+!brand_store_matching.py
+!location_bias_reranking.py
+!integrated_dimensionality_reduction.py
+
+# All other files except essentials
+*
+!requirements.txt
+!.streamlit/
+!.streamlit/config.toml
+!.streamlit/secrets.toml
+!.env.example
+!.gitignore
+!STREAMLIT_DEPLOY.md
+!DEPLOY_FILES.md
