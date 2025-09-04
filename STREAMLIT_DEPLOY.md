@@ -17,7 +17,7 @@ git push origin main
 4. リポジトリ設定:
    - **Repository**: あなたのリポジトリを選択
    - **Branch**: `main`
-   - **Main file path**: `streamlit_brand_app_improved.py`
+   - **Main file path**: `streamlit_brand_app_improved.py` (統合版)
    - **App URL**: 任意のURL名を設定
 
 ### 3. Secrets設定（APIキー）
@@ -47,13 +47,17 @@ GOOGLE_CSE_ID = "your_search_engine_id"
 3. **"Create API key"** で新しいキーを作成
 4. キーをコピーしてStreamlit Secretsに設定
 
-## 📱 アプリ機能
+## 📱 アプリ機能（統合版）
 
 - ✅ ブランド名入力
 - ✅ Gemini APIで説明文自動生成
 - ✅ 類似ブランド分析
 - ✅ インタラクティブ可視化
 - ✅ 位置情報リランキング
+- ✅ 次元削減・クラスタリング分析
+- ✅ UMAP/t-SNE/PCA可視化
+- ✅ ジャンル分析
+- ✅ CSVデータエクスポート
 
 ## ⚠️ 注意事項
 
