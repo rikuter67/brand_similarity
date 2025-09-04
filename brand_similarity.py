@@ -1,10 +1,35 @@
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-import seaborn as sns
+
+# Configure matplotlib for headless environments
 import os
+# Set environment variables for headless matplotlib
+os.environ['MPLBACKEND'] = 'Agg'
+
+try:
+    import matplotlib
+    # Set backend before any matplotlib imports
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import matplotlib.font_manager as fm
+    import seaborn as sns
+    MATPLOTLIB_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: matplotlib import failed: {e}")
+    # Create dummy matplotlib objects to prevent attribute errors
+    plt = None
+    sns = None
+    MATPLOTLIB_AVAILABLE = False
+    # Create dummy objects to prevent errors
+    class DummyPlt:
+        def figure(*args, **kwargs): pass
+        def savefig(*args, **kwargs): pass
+        def close(*args, **kwargs): pass
+        def tight_layout(*args, **kwargs): pass
+        def rcParams(*args, **kwargs): pass
+    plt = DummyPlt()
+    sns = None
 import warnings
 from location_bias_reranking import LocationBasedSimilarityReranker
 from integrated_dimensionality_reduction import IntegratedDimensionalityReduction
@@ -239,6 +264,10 @@ class LLMStyleEmbeddingAnalyzer:
         """ブランド間類似度ヒートマップの作成 (日本語対応)"""
         print("\n📊 Creating brand-to-brand similarity heatmap (日本語対応)...")
         
+        if not MATPLOTLIB_AVAILABLE:
+            print("⚠️ matplotlib not available. Skipping heatmap creation.")
+            return
+        
         if self.similarity_matrix is None:
             print("❌ Similarity matrix not calculated. Please run calculate_similarity_matrix() first.")
             return
@@ -339,6 +368,10 @@ class LLMStyleEmbeddingAnalyzer:
     def create_static_analysis(self, output_dir):
         """静的分析プロット"""
         print("📊 Creating static analysis plots...")
+        
+        if not MATPLOTLIB_AVAILABLE:
+            print("⚠️ matplotlib not available. Skipping static analysis plots.")
+            return
         
         if self.embeddings is None:
             print("❌ エンベディングが生成されていません。先に generate_advanced_embeddings() を実行してください。")

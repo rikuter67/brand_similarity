@@ -5,8 +5,22 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
 from sklearn.mixture import GaussianMixture
 import umap
-import matplotlib.pyplot as plt
-import seaborn as sns
+
+# Configure matplotlib for headless environments
+import os
+os.environ['MPLBACKEND'] = 'Agg'
+
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # Set backend before importing pyplot
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    MATPLOTLIB_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: matplotlib import failed: {e}")
+    plt = None
+    sns = None
+    MATPLOTLIB_AVAILABLE = False
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -255,6 +269,10 @@ class IntegratedDimensionalityReduction:
     
     def _create_subplot_comparison(self, output_dir, clusters=None, show_brand_names=True):
         """動的サブプロットで複数の手法を比較"""
+        if not MATPLOTLIB_AVAILABLE:
+            print("⚠️ matplotlib not available. Skipping subplot comparison.")
+            return
+            
         methods = list(self.results.keys())
         n_methods = len(methods)
         
@@ -567,6 +585,10 @@ class IntegratedDimensionalityReduction:
             n_clusters: クラスター数
             output_dir: 出力ディレクトリ
         """
+        if not MATPLOTLIB_AVAILABLE:
+            print("⚠️ matplotlib not available. Skipping single method visualization.")
+            return
+            
         if method not in self.available_methods:
             print(f"❌ {method} は利用できません")
             return
